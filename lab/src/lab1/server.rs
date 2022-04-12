@@ -7,7 +7,7 @@ pub struct StorageServer {
     storage: Box<dyn storage::Storage>,
 }
 impl StorageServer {
-    fn new(s: Box<dyn storage::Storage>) -> StorageServer {
+    pub fn new(s: Box<dyn storage::Storage>) -> StorageServer {
         StorageServer { storage: s }
     }
 }
@@ -17,16 +17,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
         &self,
         request: tonic::Request<rpc::Key>,
     ) -> Result<tonic::Response<rpc::Value>, tonic::Status> {
-        // let result = self
-        //     .storage
-        //     .get(&request.into_inner().key.to_string())
-        //     .await
-        //     .map_err(|e| {
-        //         Err(tonic::Status::new(
-        //             tonic::Code::Unknown,
-        //             format!("Error while invoking get: {}", e.into()),
-        //         ))
-        //     });
         let result = match self
             .storage
             .get(&request.into_inner().key.to_string())
@@ -40,17 +30,14 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking get: {}", e.into()),
-        //     ))
-        // });
         let response = match result {
             Some(val) => rpc::Value { value: val },
-            None => rpc::Value {
-                value: String::from(""), // TODO: decide whether to return error or not
-            },
+            None => {
+                return Err(tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Error while invoking get: Key not found"),
+                ))
+            }
         };
         Ok(tonic::Response::new(response))
     }
@@ -75,12 +62,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking set: {}", e.into()),
-        //     ))
-        // });
         Ok(tonic::Response::new(rpc::Bool { value: result }))
     }
     async fn keys(
@@ -104,12 +85,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking keys: {}", e.into()),
-        //     ))
-        // });
         let storage::List(key_list) = result;
         let response = rpc::StringList {
             list: key_list.clone(),
@@ -133,13 +108,13 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking list_get: {}", e.into()),
-        //     ))
-        // });
         let storage::List(val_list) = result;
+        if val_list.is_empty() {
+            return Err(tonic::Status::new(
+                tonic::Code::Unknown,
+                format!("Error while invoking list_get: Key Not Found"),
+            ));
+        }
         let response = rpc::StringList {
             list: val_list.clone(),
         };
@@ -166,12 +141,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking list_append: {}", e.into()),
-        //     ))
-        // });
         Ok(tonic::Response::new(rpc::Bool { value: result }))
     }
     async fn list_remove(
@@ -195,12 +164,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking list_remove: {}", e.into()),
-        //     ))
-        // });
         Ok(tonic::Response::new(rpc::ListRemoveResponse {
             removed: result,
         }))
@@ -226,12 +189,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking list_keys: {}", e.into()),
-        //     ))
-        // });
         let storage::List(key_list) = result;
         let response = rpc::StringList {
             list: key_list.clone(),
@@ -251,12 +208,6 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
                 ))
             }
         };
-        // .map_err(|e| {
-        //     Err(tonic::Status::new(
-        //         tonic::Code::Unknown,
-        //         format!("Error while invoking clock: {}", e.into()),
-        //     ))
-        // });
         Ok(tonic::Response::new(rpc::Clock { timestamp: result }))
     }
 }

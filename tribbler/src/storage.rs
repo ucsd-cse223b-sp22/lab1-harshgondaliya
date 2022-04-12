@@ -114,7 +114,7 @@ impl KeyString for MemStorage {
     async fn get(&self, key: &str) -> TribResult<Option<String>> {
         match self.kvs.read().map_err(|e| e.to_string())?.get(key) {
             Some(v) => Ok(Some(v.to_string())),
-            None => Ok(None),
+            None => Ok(None), // return value inside Ok can be None because returned value is option
         }
     }
 
