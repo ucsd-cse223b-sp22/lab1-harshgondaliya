@@ -32,12 +32,9 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
         };
         let response = match result {
             Some(val) => rpc::Value { value: val },
-            None => {
-                return Err(tonic::Status::new(
-                    tonic::Code::Unknown,
-                    format!("Error while invoking get: Key not found"),
-                ))
-            }
+            None => rpc::Value {
+                value: String::from(""),
+            },
         };
         Ok(tonic::Response::new(response))
     }
@@ -109,12 +106,12 @@ impl rpc::trib_storage_server::TribStorage for StorageServer {
             }
         };
         let storage::List(val_list) = result;
-        if val_list.is_empty() {
-            return Err(tonic::Status::new(
-                tonic::Code::Unknown,
-                format!("Error while invoking list_get: Key Not Found"),
-            ));
-        }
+        // if val_list.is_empty() {
+        //     return Err(tonic::Status::new(
+        //         tonic::Code::Unknown,
+        //         format!("Error while invoking list_get: Key Not Found"),
+        //     ));
+        // }
         let response = rpc::StringList {
             list: val_list.clone(),
         };

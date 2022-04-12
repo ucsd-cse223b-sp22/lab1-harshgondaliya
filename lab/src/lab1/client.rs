@@ -18,7 +18,13 @@ impl storage::KeyString for StorageClient {
             })
             .await?;
         match response.into_inner().value {
-            value => Ok(Some(value)),
+            value => {
+                if value.chars().count() == 0 {
+                    Ok(None)
+                } else {
+                    Ok(Some(value))
+                }
+            }
         }
     }
     async fn set(&self, kv: &storage::KeyValue) -> TribResult<bool> {
